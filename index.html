@@ -37,12 +37,138 @@
 --green-light:#052e16;--red-light:#450a0a;--amber-light:#451a03;--blue-light:#1e3a5f;
 }
 html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
-@media(min-width:481px){body{background:#E2E8F0}[data-dark] body,[data-dark]>body{background:#000}}
-#root{height:100%;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative;background:var(--bg)}
+@media(min-width:481px){body{background:#E2E8F0}[data-dark] body,[data-dark]>body{background:#111}}
+#root{height:100%;display:flex;flex-direction:column;width:100%;margin:0 auto;position:relative;background:var(--bg)}
 .app{display:flex;flex-direction:column;height:100%;overflow:hidden}
+@media(min-width:768px){
+  .app{flex-direction:row}
+  .page{flex:1;overflow-y:auto;padding:24px 32px 24px;scroll-behavior:smooth}
+}
 .page{flex:1;overflow-y:auto;padding:16px 16px 80px;scroll-behavior:smooth}
 .page::-webkit-scrollbar{width:4px}.page::-webkit-scrollbar-track{background:transparent}
 .page::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+/* SIDEBAR */
+.sidebar{display:none}
+@media(min-width:768px){
+  .app{flex-direction:row}
+  .page{
+    flex:1;
+    overflow-y:auto;
+    padding:28px 40px 28px;
+    scroll-behavior:smooth;
+    background:var(--bg);
+  }
+  .page-inner{
+    max-width:680px;
+    margin:0 auto;
+    width:100%;
+  }
+ 
+  /* Sembunyiin bottom nav & FAB di desktop */
+  .nav{display:none !important}
+  .fab{display:none !important}
+ 
+  /* Sidebar */
+  .sidebar{
+    display:flex;
+    flex-direction:column;
+    width:220px;
+    min-width:220px;
+    height:100vh;
+    background:var(--surface);
+    border-right:1px solid var(--border);
+    padding:20px 12px;
+    position:sticky;
+    top:0;
+    overflow-y:auto;
+    z-index:100;
+  }
+  .sidebar-logo{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:4px 8px;
+    margin-bottom:28px;
+  }
+  .sidebar-logo-icon{
+    width:34px;
+    height:34px;
+    border-radius:10px;
+    background:var(--green);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    font-size:17px;
+    flex-shrink:0;
+  }
+  .sidebar-logo-text{
+    font-size:15px;
+    font-weight:700;
+    color:var(--text);
+  }
+  .sidebar-nav{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    flex:1;
+  }
+  .sidebar-btn{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 12px;
+    border-radius:10px;
+    border:none;
+    cursor:pointer;
+    background:transparent;
+    color:var(--text2);
+    font-family:var(--font);
+    font-size:14px;
+    font-weight:500;
+    transition:.15s;
+    width:100%;
+    text-align:left;
+  }
+  .sidebar-btn:hover{
+    background:var(--surface2);
+    color:var(--text);
+  }
+  .sidebar-btn.active{
+    background:var(--green-light);
+    color:var(--green);
+    font-weight:600;
+  }
+  .sidebar-divider{
+    height:1px;
+    background:var(--border);
+    margin:12px 0;
+  }
+  .sidebar-add-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:11px;
+    border-radius:10px;
+    background:var(--green);
+    color:white;
+    border:none;
+    cursor:pointer;
+    font-family:var(--font);
+    font-size:14px;
+    font-weight:600;
+    width:100%;
+    transition:.15s;
+  }
+  .sidebar-add-btn:hover{background:#15803D}
+ 
+  /* Header di desktop lebih compact */
+  .header{margin-bottom:16px}
+ 
+  /* Balance card font lebih kecil di desktop biar ga terlalu gede */
+  .balance-amount{font-size:clamp(22px,3vw,32px)}
+}
 
 /* BOTTOM NAV */
 .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
@@ -405,8 +531,12 @@ function App(){
   const currency=data.settings?.currency||'IDR';
 
   useEffect(()=>{
-    document.documentElement.setAttribute('data-dark',dark?'true':'');
-  },[dark]);
+  if(dark){
+    document.documentElement.setAttribute('data-dark','true');
+  } else {
+    document.documentElement.removeAttribute('data-dark');
+  }
+},[dark]);
 
   const persist=(d)=>{setData(d);save(d)};
   const showToast=(msg)=>{setToast(msg);};
@@ -459,19 +589,67 @@ function App(){
     settings:()=>e(SettingsPage,{cats,data,saveSettings,deleteCat,setModal,showToast,persist}),
   };
 
+  const navItems=[
+    {id:'home',label:'Beranda',icon:'home'},
+    {id:'txs',label:'Transaksi',icon:'list'},
+    {id:'report',label:'Laporan',icon:'chart'},
+    {id:'settings',label:'Pengaturan',icon:'settings'}
+  ];
+
   return e('div',{className:'app'},
-    e('div',{className:'page'},
-      (pages[page]||pages.home)()
+
+    // SIDEBAR (desktop only)
+    e('div',{className:'sidebar'},
+      e('div',{className:'sidebar-logo'},
+        e('div',{className:'sidebar-logo-icon'},'🌿'),
+        e('span',{className:'sidebar-logo-text'},'Dompet')
+      ),
+      e('div',{className:'sidebar-nav'},
+        navItems.map(n=>e('button',{
+          key:n.id,
+          className:'sidebar-btn'+(page===n.id?' active':''),
+          onClick:()=>setPage(n.id)
+        },
+          e(Icon,{name:n.icon,size:18}),
+          n.label
+        ))
+      ),
+      e('div',{className:'sidebar-divider'}),
+      e('button',{
+        className:'sidebar-add-btn',
+        onClick:()=>setModal({type:'tx',data:{type:'expense',date:TODAY()}})
+      },
+        e(Icon,{name:'plus',size:18}),
+        'Tambah Transaksi'
+      )
     ),
+
+    // MAIN CONTENT
+    e('div',{className:'page'},
+      e('div',{className:'page-inner'},
+        (pages[page]||pages.home)()
+      )
+    ),
+
+    // BOTTOM NAV (mobile only)
     e('nav',{className:'nav'},
-      [{id:'home',label:'Beranda',icon:'home'},{id:'txs',label:'Transaksi',icon:'list'},
-       {id:'report',label:'Laporan',icon:'chart'},{id:'settings',label:'Pengaturan',icon:'settings'}
-      ].map(n=>e('button',{key:n.id,className:'nav-btn'+(page===n.id?' active':''),onClick:()=>setPage(n.id)},
+      navItems.map(n=>e('button',{
+        key:n.id,
+        className:'nav-btn'+(page===n.id?' active':''),
+        onClick:()=>setPage(n.id)
+      },
         e('div',{className:'nav-icon'},e(Icon,{name:n.icon,size:20})),
         n.label
       ))
     ),
-    page!=='settings'&&e('button',{className:'fab',onClick:()=>setModal({type:'tx',data:{type:'expense',date:TODAY()}}),title:'Tambah transaksi'},'+'),
+
+    // FAB (mobile only)
+    page!=='settings'&&e('button',{
+      className:'fab',
+      onClick:()=>setModal({type:'tx',data:{type:'expense',date:TODAY()}}),
+      title:'Tambah transaksi'
+    },'+'),
+
     modal&&e(Modal,{modal,setModal,cats,saveTx,saveCat,deleteTx,fmt}),
     detailTx&&e(DetailModal,{tx:detailTx,getCat,fmt,onClose:()=>setDetailTx(null),onEdit:(tx)=>{setDetailTx(null);setModal({type:'tx',data:tx})},onDelete:(id)=>{deleteTx(id)}}),
     toast&&e(Toast,{msg:toast,onDone:()=>setToast(null)})
